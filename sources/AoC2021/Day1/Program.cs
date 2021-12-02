@@ -1,4 +1,7 @@
-﻿var data = (await File.ReadAllLinesAsync("input1.txt")).Select(int.Parse).ToArray();
+﻿using System.Runtime.InteropServices.ComTypes;
+using Microsoft.Win32.SafeHandles;
+
+var data = (await File.ReadAllLinesAsync("input.txt")).Select(int.Parse).ToArray();
 
 /*
 
