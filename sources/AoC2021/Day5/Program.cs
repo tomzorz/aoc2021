@@ -46,10 +46,7 @@ Consider only horizontal and vertical lines. At how many points do at least two 
 var lines = data.Select(x =>
 {
     var s = x.Replace(" -> ", ",").Split(",").Select(int.Parse).ToArray();
-    return (startX: s[0],
-        startY: s[1],
-        endX: s[2],
-        endY: s[3]);
+    return (startX: s[0], startY: s[1], endX: s[2], endY: s[3]);
 }).ToList();
 
 int GetDir(int start, int end)
@@ -81,8 +78,7 @@ var map = new int[1000, 1000];
 
 foreach (var (startX, startY, endX, endY) in lines)
 {
-    if(startX != endX && startY != endY) continue;
-
+    if (startX != endX && startY != endY) continue;
     Line(startX, endX, startY, endY, map);
 }
 
