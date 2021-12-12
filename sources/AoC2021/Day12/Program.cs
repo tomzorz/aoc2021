@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Net.Http.Headers;
-
 var data = (await File.ReadAllLinesAsync("input.txt")).ToList();
 
 /*
