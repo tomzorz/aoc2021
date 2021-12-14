@@ -133,7 +133,6 @@ foreach (var (axis, value) in folds)
     {
         case "x":
             folded = new bool[folded.GetLength(0), value];
-            // copy
             for (var i = 0; i < folded.GetLength(0); i++)
             {
                 for (var j = 0; j < folded.GetLength(1); j++)
@@ -141,24 +140,16 @@ foreach (var (axis, value) in folds)
                     folded[i, j] = prev[i, j];
                 }
             }
-            // fold
             for (var i = 0; i < prev.GetLength(0); i++)
             {
                 for (var j = value; j < prev.GetLength(1)-1; j++)
                 {
-                    //Console.Clear();
-                    //Print(prev, (axis, value), (i, prev.GetLength(1) - j + value - 1));
-                    //Console.WriteLine();
-                    //Print(folded, null, (i, j-value));
-                    //Debugger.Break();
                     folded[i, j - value] |= prev[i, prev.GetLength(1) - j + value - 1];
                 }
             }
-            //Debugger.Break();
             break;
         case "y":
             folded = new bool[value, folded.GetLength(1)];
-            // copy
             for (var i = 0; i < folded.GetLength(0); i++)
             {
                 for (var j = 0; j < folded.GetLength(1); j++)
@@ -166,16 +157,10 @@ foreach (var (axis, value) in folds)
                     folded[i, j] = prev[i, j];
                 }
             }
-            // fold
             for (var i = value; i < prev.GetLength(0)-1; i++)
             {
                 for (var j = 0; j < prev.GetLength(1); j++)
                 {
-                    //Console.Clear();
-                    //Print(prev, (axis, value), (prev.GetLength(0)-i+value-1, j));
-                    //Console.WriteLine();
-                    //Print(folded, null, (i-value, j));
-                    //Debugger.Break();
                     folded[i - value, j] |= prev[prev.GetLength(0) - i + value - 1, j];
                 }
             }
