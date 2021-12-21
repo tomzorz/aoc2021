@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 var data = (await File.ReadAllLinesAsync("input.txt")).ToList();
 
 /*
@@ -71,7 +69,7 @@ PartTwo
 
 */
 
-var multiverse = new ConcurrentDictionary<(int p1Step, long p1Score, int p2Step, long p2Score), long>
+var multiverse = new Dictionary<(int p1Step, long p1Score, int p2Step, long p2Score), long>
 {
     [(StartFor(data, 0), 0, StartFor(data, 1), 0)] = 1
 };
@@ -98,39 +96,44 @@ while (true)
 
     multiverse.Clear();
 
-    Parallel.ForEach(currentMultiverse, similarUniverses =>
+    foreach (var similarUniverses in currentMultiverse)
     {
         foreach (var possibleRollP1 in possibleRolls)
         {
             var p1PreRoll = similarUniverses.Key;
             var p1NewStep = StepBoard(p1PreRoll.p1Step, possibleRollP1.Key);
-            // ReSharper disable RedundantExplicitTupleComponentName
-            var p1PostRoll = (p1Step: p1NewStep, p1Score: p1PreRoll.p1Score + p1NewStep, p2Step: p1PreRoll.p2Step, p2Score: p1PreRoll.p2Score);
+            var p1NewScore = p1PreRoll.p1Score + p1NewStep;
 
-            if (p1PostRoll.p1Score >= 21)
+            if (p1NewScore >= 21)
             {
-                Interlocked.Add(ref p1Won, similarUniverses.Value * possibleRollP1.Value);
+                p1Won += similarUniverses.Value * possibleRollP1.Value;
+                continue;
             }
-            else
-            {
-                foreach (var possibleRollP2 in possibleRolls)
-                {
-                    var p2NewStep = StepBoard(p1PostRoll.p2Step, possibleRollP2.Key);
-                    var p2PostRoll = (p1Step: p1PostRoll.p1Step, p1Score: p1PostRoll.p1Score, p2Step: p2NewStep, p2Score: p1PostRoll.p2Score + p2NewStep);
 
-                    if (p2PostRoll.p2Score >= 21)
-                    {
-                        Interlocked.Add(ref p2Won, similarUniverses.Value * possibleRollP1.Value * possibleRollP2.Value);
-                    }
-                    else
-                    {
-                        var addVal = similarUniverses.Value * possibleRollP1.Value * possibleRollP2.Value;
-                        multiverse.AddOrUpdate(p2PostRoll, addVal, (_, oldValue) => oldValue + addVal);
-                    }
+            foreach (var possibleRollP2 in possibleRolls)
+            {
+                var p2NewStep = StepBoard(p1PreRoll.p2Step, possibleRollP2.Key);
+                var p2NewScore = p1PreRoll.p2Score + p2NewStep;
+                var addVal = similarUniverses.Value * possibleRollP1.Value * possibleRollP2.Value;
+
+                if (p2NewScore >= 21)
+                {
+                    p2Won += addVal;
+                    continue;
+                }
+
+                var p2PostRoll = (p1Step: p1NewStep, p1Score: p1NewScore, p2Step: p2NewStep, p2Score: p2NewScore);
+                if (!multiverse.ContainsKey(p2PostRoll))
+                {
+                    multiverse[p2PostRoll] = addVal;
+                }
+                else
+                {
+                    multiverse[p2PostRoll] += addVal;
                 }
             }
         }
-    });
+    }
 
     if(currentMultiverse.Count == 0) break;
 }
