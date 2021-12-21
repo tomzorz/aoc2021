@@ -79,6 +79,19 @@ var multiverse = new ConcurrentDictionary<(int p1Step, long p1Score, int p2Step,
 var p1Won = 0L;
 var p2Won = 0L;
 
+var possibleRolls = new Dictionary<int, int>();
+for (var a = 1; a < 4; a++)
+{
+    for (var b = 1; b < 4; b++)
+    {
+        for (var c = 1; c < 4; c++)
+        {
+            if (!possibleRolls.ContainsKey(a + b + c)) possibleRolls[a + b + c] = 0;
+            possibleRolls[a + b + c] += 1;
+        }
+    }
+}
+
 while (true)
 {
     var currentMultiverse = multiverse.ToDictionary(x => x.Key, y => y.Value);
@@ -87,47 +100,32 @@ while (true)
 
     Parallel.ForEach(currentMultiverse, similarUniverses =>
     {
-        for (var i = 1; i < 4; i++)
+        foreach (var possibleRollP1 in possibleRolls)
         {
-            for (var j = 1; j < 4; j++)
+            var p1PreRoll = similarUniverses.Key;
+            var p1NewStep = StepBoard(p1PreRoll.p1Step, possibleRollP1.Key);
+            // ReSharper disable RedundantExplicitTupleComponentName
+            var p1PostRoll = (p1Step: p1NewStep, p1Score: p1PreRoll.p1Score + p1NewStep, p2Step: p1PreRoll.p2Step, p2Score: p1PreRoll.p2Score);
+
+            if (p1PostRoll.p1Score >= 21)
             {
-                for (var k = 1; k < 4; k++)
+                Interlocked.Add(ref p1Won, similarUniverses.Value * possibleRollP1.Value);
+            }
+            else
+            {
+                foreach (var possibleRollP2 in possibleRolls)
                 {
-                    var totalRoll = i + j + k;
+                    var p2NewStep = StepBoard(p1PostRoll.p2Step, possibleRollP2.Key);
+                    var p2PostRoll = (p1Step: p1PostRoll.p1Step, p1Score: p1PostRoll.p1Score, p2Step: p2NewStep, p2Score: p1PostRoll.p2Score + p2NewStep);
 
-                    var p1PreRoll = similarUniverses.Key;
-                    var p1NewStep = StepBoard(p1PreRoll.p1Step, totalRoll);
-                    // ReSharper disable RedundantExplicitTupleComponentName
-                    var p1PostRoll = (p1Step: p1NewStep, p1Score: p1PreRoll.p1Score + p1NewStep, p2Step: p1PreRoll.p2Step, p2Score: p1PreRoll.p2Score);
-
-                    if (p1PostRoll.p1Score >= 21)
+                    if (p2PostRoll.p2Score >= 21)
                     {
-                        Interlocked.Add(ref p1Won, similarUniverses.Value);
+                        Interlocked.Add(ref p2Won, similarUniverses.Value * possibleRollP1.Value * possibleRollP2.Value);
                     }
                     else
                     {
-                        for (var l = 1; l < 4; l++)
-                        {
-                            for (var m = 1; m < 4; m++)
-                            {
-                                for (var n = 1; n < 4; n++)
-                                {
-                                    totalRoll = l + m + n;
-
-                                    var p2NewStep = StepBoard(p1PostRoll.p2Step, totalRoll);
-                                    var p2PostRoll = (p1Step: p1PostRoll.p1Step, p1Score: p1PostRoll.p1Score, p2Step: p2NewStep, p2Score: p1PostRoll.p2Score + p2NewStep);
-
-                                    if (p2PostRoll.p2Score >= 21)
-                                    {
-                                        Interlocked.Add(ref p2Won, similarUniverses.Value);
-                                    }
-                                    else
-                                    {
-                                        multiverse.AddOrUpdate(p2PostRoll, similarUniverses.Value, (_, oldValue) => oldValue + similarUniverses.Value);
-                                    }
-                                }
-                            }
-                        }
+                        var addVal = similarUniverses.Value * possibleRollP1.Value * possibleRollP2.Value;
+                        multiverse.AddOrUpdate(p2PostRoll, addVal, (_, oldValue) => oldValue + addVal);
                     }
                 }
             }
@@ -143,12 +141,7 @@ Console.WriteLine(Math.Max(p1Won, p2Won));
 
 int StartFor(List<string> src, int playerId) => int.Parse(src[playerId].Split(':', StringSplitOptions.TrimEntries)[1]);
 
-int StepBoard(int current, int step)
-{
-    var rv = current + step;
-    while (rv > 10) rv -= 10;
-    return rv;
-}
+int StepBoard(int current, int step) => (current + step - 1) % 10 + 1;
 
 /* classes */
 
